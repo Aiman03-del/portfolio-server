@@ -1,7 +1,8 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import { verify_email } from "email-verifier-node";
+// Replace email-verifier-node with email-validator
+import { validate as validateEmail } from "email-validator";
 import express from "express";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import nodemailer from "nodemailer";
@@ -59,13 +60,8 @@ async function run() {
       }
 
       try {
-        // Verify email
-        const verificationResult = await verify_email(
-          email,
-          process.env.EMAIL_VERIFIER_API_KEY
-        );
-
-        if (!verificationResult.is_verified) {
+        // Verify email using email-validator
+        if (!validateEmail(email)) {
           console.log("Validation error: Invalid email address!");
           return res.status(400).json({ error: "Invalid email address!" });
         }
@@ -97,13 +93,26 @@ async function run() {
         });
       }
     });
+
+    // GET route for /send-email
+    app.get("/send-email", (req, res) => {
+      res.status(405).send("This endpoint only accepts POST requests.");
+    });
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
   }
 }
 run().catch(console.dir);
 
+// Root route
+app.get("/", (req, res) => {
+  res.send("Welcome to the Portfolio API");
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Vercel-এর জন্য এক্সপ্রেস অ্যাপ এক্সপোর্ট করুন
+export default app;
